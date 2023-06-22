@@ -22,9 +22,12 @@ uri = os.environ.get(URI_ENV_VAR)
 
 print(f"Environment: server_ip {server_ip}, server_port {server_port}, uri {uri}")
 
+print(f"Example full URI: rtsp://{server_ip}:{server_port}/{uri}")
+
 # Globals for client connections (assumes single connection)
 client_ip = ""
 client_port = 0
+connection = None
 
 class CustomRTSPMediaFactory(GstRtspServer.RTSPMediaFactory):
     def __init__(self, pipeline):
@@ -32,32 +35,49 @@ class CustomRTSPMediaFactory(GstRtspServer.RTSPMediaFactory):
         self.pipeline = pipeline
     
     def do_create_element(self, url):
-        # ugly hack to get client ip and port 
-
-        global client_ip, client_port
+        global connection, client_ip, client_port
         
-        current_process_id = os.getpid()
-        try:
-            process = psutil.Process(current_process_id)
-            connections = process.connections(kind="tcp")
-            for conn in connections:
-                if (conn.status == psutil.CONN_ESTABLISHED) and (conn.raddr.ip == client_ip):
-                    client_port = conn.raddr.port
-        except psutil.NoSuchProcess:
-            print(f"No process with PID {current_process_id} found")
-
-        print(f"Client streaming: IP {client_ip}, Port {client_port}")
+        print(f"Client STREAMING: IP {client_ip}, Port {client_port}")
         
         return Gst.parse_launch(self.pipeline)
 
+
 def on_client_connected(server, client):
-    global client_ip, client_port
+    global client_ip, client_port, connection
+
     connection = client.get_connection()
     client_ip = connection.get_ip()
-    # XXX: calls to connection.get_url() trigger the following error on exit
+    
+    # (CDLTLL) 
+    client_port = get_client_port(client_ip)
+
+    print(f"Client CONNECTED: IP {client_ip}, Port {client_port}")
+
+
+# (CDLTLL)
+def get_client_port(client_ip):
+    client_port_var = ""
+    current_process_id = os.getpid()
+    try:
+        process = psutil.Process(current_process_id)
+        connections = process.connections(kind="tcp")
+        for conn in connections:
+            if (conn.status == psutil.CONN_ESTABLISHED) and (conn.raddr.ip == client_ip):
+                # Get the client Port and return it
+                client_port_var = conn.raddr.port
+                return client_port_var
+    except psutil.NoSuchProcess:
+        print(f"No process with PID {current_process_id} found")
+
+    # (CDLTLL): calls to connection.get_url() trigger the following error on exit
     # (python:1): GLib-GIO-CRITICAL **: 00:06:32.644: g_inet_address_new_from_string: assertion 'string != NULL' failed
-    # _, client_port = connection.get_url().get_port() # client_address.get_port()
-    print(f"Client connected: IP {client_ip}")
+    # _, client_port_var = connection.get_url().get_port() # client_address.get_port()
+    # client_port_var = str(connection.get_url().get_port())
+
+    # If we couldn't find the client port using psutil, return None
+    return None
+
+
 
 # Initialize GStreamer
 Gst.init(None)
