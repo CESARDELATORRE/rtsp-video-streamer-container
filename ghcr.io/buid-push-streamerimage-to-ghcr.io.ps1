@@ -6,4 +6,4 @@ $imageName="${imageHost}/${user}/${prefix}-container:${tags}"
 
 docker build --tag=${imageName} --file=./Dockerfiles/rtsp .
 
-# docker push ${imageName}
+docker push ${imageName}
