@@ -37,10 +37,12 @@ class CustomRTSPMediaFactory(GstRtspServer.RTSPMediaFactory):
     def do_create_element(self, url):
         global connection, client_ip, client_port
         
-        print(f"Client STREAMING: IP {client_ip}, Port {client_port}")
+        # (CDLTLL) Not showing the client IP because it gets the one from the Docker Host, not the real RTSP remote client.
+        # print(f"Client STREAMING: IP {client_ip}, Port {client_port}")
         
-        return Gst.parse_launch(self.pipeline)
+        print(f"STREAMING to Client")
 
+        return Gst.parse_launch(self.pipeline)
 
 def on_client_connected(server, client):
     global client_ip, client_port, connection
@@ -48,10 +50,13 @@ def on_client_connected(server, client):
     connection = client.get_connection()
     client_ip = connection.get_ip()
     
-    # (CDLTLL) 
+    
     client_port = get_client_port(client_ip)
 
-    print(f"Client CONNECTED: IP {client_ip}, Port {client_port}")
+    # (CDLTLL) Not showing the client IP because it gets the one from the Docker Host, not the real RTSP remote client.
+    # print(f"Client CONNECTED: IP {client_ip}, Port {client_port}")
+
+    print(f"Client CONNECTED")
 
 
 # (CDLTLL)

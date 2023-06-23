@@ -3,7 +3,10 @@ $rtsp_port="8554"
 $rtsp_host="localhost"
 $rtsp_uri="video"
 
+
 $containterImage="mecsolutionaccelerator/rtsp-video-streamer:1.0"
+
+docker pull $containterImage
 
 docker run -it --name ${rtsp_name} -p ${rtsp_port}:${rtsp_port} -e RTSP_HOST=${rtsp_host} -e RTSP_PORT=${rtsp_port} -e RTSP_URI=${rtsp_uri} ${containterImage}
 
